@@ -2,6 +2,7 @@
 import numpy as np
 import pandas as pd
 
+
 def compute_indicators(df, short_window=15, long_window=80, atr_period=14):
     df = df.copy()
     df['short_ma'] = df['close'].rolling(short_window).mean()
@@ -14,6 +15,10 @@ def compute_indicators(df, short_window=15, long_window=80, atr_period=14):
     df.dropna(inplace=True)
     return df
 
+def round_price(price):
+    """Round to valid 2-decimal increments for US stock prices."""
+    return float(f"{price:.2f}")
+
 def generate_signals(data_dict, short_window=15, long_window=80, atr_period=14, atr_multiplier=2.0):
     decisions = []
     for symbol, df in data_dict.items():
@@ -22,8 +27,8 @@ def generate_signals(data_dict, short_window=15, long_window=80, atr_period=14, 
         if latest['short_ma'] > latest['long_ma']:
             entry_price = float(latest['close'])
             atr = float(latest['atr']) if latest['atr'] > 0 else 1.0
-            stop_price = entry_price - atr * atr_multiplier
-            take_profit = entry_price + 2 * atr
+            stop_price = round_price(entry_price - atr * atr_multiplier)
+            take_profit = round_price(entry_price + 2 * atr)
             decisions.append({
                 "symbol": symbol,
                 "action": "buy",

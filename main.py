@@ -1,6 +1,7 @@
 # main.py (Live-capable entrypoint, conservative behavior)
 import os
 import json
+import time
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 from data_loader import load_history
@@ -60,7 +61,7 @@ def run_all():
     if stopped_until:
         try:
             until_ts = datetime.fromisoformat(stopped_until)
-            if until_ts > datetime.utcnow():
+            if until_ts > datetime.now():
                 return jsonify({"status":"stopped","reason":"circuit_breaker","until":stopped_until}), 200
         except:
             pass
@@ -127,7 +128,7 @@ def run_all():
             try:
                 order = place_bracket_order(api, symbol, qty, side='buy', take_profit=dec['take_profit'], stop_loss=round(stop_price,2), client_tag='sim')
                 append_trade({
-                    'timestamp': datetime.utcnow().isoformat(),
+                    'timestamp': datetime.now().isoformat(),
                     'symbol': symbol,
                     'side': 'buy',
                     'qty': qty,
@@ -140,7 +141,7 @@ def run_all():
                 results.append({'symbol':symbol, 'action':'submitted', 'order_id': getattr(order,'id','')})
             except Exception as e:
                 append_trade({
-                    'timestamp': datetime.utcnow().isoformat(),
+                    'timestamp': datetime.now().isoformat(),
                     'symbol': symbol,
                     'side': 'buy',
                     'qty': qty,
@@ -154,9 +155,9 @@ def run_all():
         else:
             # LIVE mode: place real order (still uses same function)
             try:
-                order = place_bracket_order(api, symbol, qty, side='buy', take_profit=dec['take_profit'], stop_loss=round(stop_price,2), client_tag='live')
+                order = place_bracket_order(api, symbol, qty, side='buy', take_profit=dec['take_profit'], stop_loss=round(stop_price,2))
                 append_trade({
-                    'timestamp': datetime.utcnow().isoformat(),
+                    'timestamp': datetime.now().isoformat(),
                     'symbol': symbol,
                     'side': 'buy',
                     'qty': qty,
@@ -169,7 +170,7 @@ def run_all():
                 results.append({'symbol':symbol, 'action':'submitted', 'order_id': getattr(order,'id','')})
             except Exception as e:
                 append_trade({
-                    'timestamp': datetime.utcnow().isoformat(),
+                    'timestamp': datetime.now().isoformat(),
                     'symbol': symbol,
                     'side': 'buy',
                     'qty': qty,
@@ -201,3 +202,5 @@ def trigger_report():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.getenv('PORT','10000')))
+
+# curl -X POST http://127.0.0.1:10000/run -H "X-Invoke-Token: b0fb7813d55ccb132b720f844a1a8427"

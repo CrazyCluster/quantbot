@@ -1,0 +1,42 @@
+{
+  "AAPL": {
+    "params": {
+      "short_window": 30,
+      "long_window": 78,
+      "atr_multiplier": 3.412871442742171
+    },
+    "score": 0.8816917217035188
+  },
+  "MSFT": {
+    "params": {
+      "short_window": 27,
+      "long_window": 74,
+      "atr_multiplier": 1.6613662600815011
+    },
+    "score": 0.6801991550017372
+  },
+  "NVDA": {
+    "params": {
+      "short_window": 30,
+      "long_window": 65,
+      "atr_multiplier": 2.2542463027534834
+    },
+    "score": 2.0455900101376803
+  },
+  "AMZN": {
+    "params": {
+      "short_window": 19,
+      "long_window": 194,
+      "atr_multiplier": 1.999379320622695
+    },
+    "score": 0.8480551360703239
+  },
+  "GOOGL": {
+    "params": {
+      "short_window": 10,
+      "long_window": 63,
+      "atr_multiplier": 3.471225641973824
+    },
+    "score": 1.2098907222979314
+  }
+}

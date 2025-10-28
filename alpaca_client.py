@@ -4,6 +4,9 @@ import time
 import uuid
 from alpaca_trade_api.rest import REST, APIError, TimeFrame
 
+from dotenv import load_dotenv
+load_dotenv()
+
 def get_alpaca_client():
     key = os.getenv("ALPACA_API_KEY")
     secret = os.getenv("ALPACA_API_SECRET")
