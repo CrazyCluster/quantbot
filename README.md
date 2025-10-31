@@ -1,24 +1,25 @@
-quantbot-ai-live — Alpaca Live Trading example (conservative, safety-first)
+Quantbot-AI v3 — Dynamic Watchlist + Optuna + Weekly Rebalance (70/30)
+====================================================================
 
-IMPORTANT: This repository is a template for live trading. DO NOT run live trading until you fully reviewed and tested on paper.
+Overview:
+- Weekly automatic selection of top Growth & Defensive stocks from combined static + dynamic watchlists
+- Weekly Optuna optimization (parameter tuning) performed before trading
+- Weekly rebalancing to 70% Growth / 30% Defensive
+- Paper trading by default; safe caps and daily-loss circuit-breaker included
+- Weekly email report with selection, trades and performance chart
 
 Quick start:
-1) Copy files to a new Git repository.
-2) Create a .env from .env.template and fill your Alpaca LIVE API keys and email app password.
-3) Install dependencies:
+1) Unzip project and create a .env from .env.template with your keys and settings.
+2) Install dependencies:
    pip install -r requirements.txt
-4) Run locally in TEST mode (paper) first — set TRADING_MODE=paper in .env
+3) Run locally:
    python main.py
-   # then in another terminal:
-   curl -X POST http://127.0.0.1:10000/run -H "X-Invoke-Token: <INVOKE_SECRET>"
+4) Trigger endpoints (with header X-Invoke-Token or ?token=...):
+   - /auto_select_rebalance  (select + optimize + rebalance)
+   - /rebalance  (rebalance using last selection)
+   - /optimize  (run Optuna)
+   - /report (send email report)
 
-Deployment:
-- Push to GitHub and deploy to Render or Replit.
-- Set environment variables in the hosting service.
-- Schedule cron-job.org or Render Cron to call https://<your-service>/run weekly with header X-Invoke-Token.
-
-SAFETY: This template includes caps:
-- MAX_POSITION_PCT (max 20% capital per position)
-- MAX_DAILY_LOSS (stop trading for the day after 2% loss)
-- MAX_DAILY_TRADES (cap trades per day)
-- TRADING_MODE must be 'live' to actually place live orders.
+Important:
+- Test thoroughly in TRADING_MODE=paper before switching to live.
+- Do not commit your real .env to any public repository.

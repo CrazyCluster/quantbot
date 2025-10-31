@@ -1,42 +1,41 @@
-# strategy.py (conservative live strategy)
-import numpy as np
 import pandas as pd
+import numpy as np
 
-
-def compute_indicators(df, short_window=15, long_window=80, atr_period=14):
+def compute_indicators(df, short=10, long=50, atr_period=14):
     df = df.copy()
-    df['short_ma'] = df['close'].rolling(short_window).mean()
-    df['long_ma'] = df['close'].rolling(long_window).mean()
-    high_low = df['high'] - df['low']
-    high_close = (df['high'] - df['close'].shift()).abs()
-    low_close = (df['low'] - df['close'].shift()).abs()
-    tr = pd.concat([high_low, high_close, low_close], axis=1).max(axis=1)
-    df['atr'] = tr.rolling(atr_period).mean()
+    if 'Adj Close' not in df.columns and 'Adj Close' in df:
+        # ensure column exists
+        pass
+    df['short_ma'] = df['Adj Close'].rolling(short).mean()
+    df['long_ma'] = df['Adj Close'].rolling(long).mean()
+    if 'High' in df.columns and 'Low' in df.columns:
+        high_low = df['High'] - df['Low']
+        high_close = (df['High'] - df['Adj Close'].shift()).abs()
+        low_close = (df['Low'] - df['Adj Close'].shift()).abs()
+        tr = pd.concat([high_low, high_close, low_close], axis=1).max(axis=1)
+        df['atr'] = tr.rolling(atr_period).mean()
+    else:
+        df['atr'] = df['Adj Close'].pct_change().rolling(atr_period).std() * df['Adj Close']
+        df['atr'].fillna(method='bfill', inplace=True)
     df.dropna(inplace=True)
     return df
 
-def round_price(price):
-    """Round to valid 2-decimal increments for US stock prices."""
-    return float(f"{price:.2f}")
+def generate_signal(df, params):
+    df2 = compute_indicators(df, params.get('short',10), params.get('long',50), 14)
+    latest = df2.iloc[-1]
+    if latest['short_ma'] > latest['long_ma']:
+        entry = float(latest['Adj Close'])
+        atr = float(latest['atr']) if latest['atr']>0 else 1.0
+        stop = entry - params.get('atr_mult',1.5)*atr
+        take = entry + 2*atr
+        return {'action':'buy','entry':entry,'stop':round(stop,2),'take':round(take,2)}
+    return {'action':'hold'}
 
-def generate_signals(data_dict, short_window=15, long_window=80, atr_period=14, atr_multiplier=2.0):
-    decisions = []
-    for symbol, df in data_dict.items():
-        df2 = compute_indicators(df, short_window, long_window, atr_period)
-        latest = df2.iloc[-1]
-        if latest['short_ma'] > latest['long_ma']:
-            entry_price = float(latest['close'])
-            atr = float(latest['atr']) if latest['atr'] > 0 else 1.0
-            stop_price = round_price(entry_price - atr * atr_multiplier)
-            take_profit = round_price(entry_price + 2 * atr)
-            decisions.append({
-                "symbol": symbol,
-                "action": "buy",
-                "entry_price": entry_price,
-                "stop_price": stop_price,
-                "take_profit": take_profit,
-                "atr": atr
-            })
-        else:
-            decisions.append({"symbol": symbol, "action": "hold"})
-    return decisions
+def simulate_strategy_for_opt(df, short, long, atr_mult):
+    df2 = compute_indicators(df, short, long)
+    df2['signal'] = (df2['short_ma'] > df2['long_ma']).astype(int)
+    df2['returns'] = df2['Adj Close'].pct_change()
+    df2['strategy'] = df2['signal'].shift(1) * df2['returns']
+    total = df2['strategy'].sum()
+    sharpe = (df2['strategy'].mean() / df2['strategy'].std()) * (252**0.5) if df2['strategy'].std()>0 else 0
+    return total * 0.6 + sharpe * 0.4
